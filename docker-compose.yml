@@ -1,0 +1,59 @@
+version: '3.7'
+services:
+    nginx:
+        container_name: "${DOCKER_NAME}_nginx"
+        image: nginx:latest
+        tty: true
+        ports:
+            - "83:80"
+        volumes:
+            - ./docker/nginx:/etc/nginx/conf.d:ro
+            - ./:/var/www:ro
+            - ./docker/logs:/var/log/nginx
+        networks:
+            - default-network
+    app:
+        container_name: "${DOCKER_NAME}"
+        image: sergeevpasha/laravel:latest
+        tty: true
+        hostname: "${DOCKER_NAME}"
+        volumes:
+            - ./:/var/www:consistent
+        networks:
+            - default-network
+    pgsql:
+        container_name: "${DOCKER_NAME}_pgsql"
+        image: postgres:latest
+        tty: true
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - PGDATA=/tmp
+        ports:
+            - 5435:5432
+        volumes:
+            - ./docker/postgres/init:/docker-entrypoint-initdb.d/:ro
+            - pgdata:/var/lib/postgresql/data:rw
+        networks:
+            - default-network
+    laravel-echo-server:
+        container_name: "${DOCKER_NAME}_laravel-echo-server"
+        image: sergeevpasha/laravel-echo-server
+        volumes:
+            - ./laravel-echo-server.json:/laravel-echo-server.json
+        networks:
+            - default-network
+    redis:
+        container_name: "${DOCKER_NAME}_redis"
+        image: redis:latest
+        volumes:
+            - redisdata:/data
+        networks:
+            - default-network
+networks:
+    default-network:
+        name: "${DOCKER_NAME}-network"
+        driver: bridge
+volumes:
+    pgdata:
+    redisdata:
